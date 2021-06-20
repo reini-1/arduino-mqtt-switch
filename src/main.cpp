@@ -6,6 +6,7 @@
 //     Adafruit SD shields and modules: pin 10
 //     Sparkfun SD shield: pin 8
 const int chipSelect = 10;
+const char configFileName[] = "config.ini";
 
 void setup() {
  // Open serial communications and wait for port to open:
@@ -30,7 +31,7 @@ void setup() {
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  File configFile = SD.open("config.ini");
+  File configFile = SD.open(configFileName);
 
   // if the file is available, write to it:
   if (configFile) {
@@ -41,7 +42,8 @@ void setup() {
   }
   // if the file isn't open, pop up an error:
   else {
-    Serial.println("error opening datalog.txt");
+    Serial.print("error opening configuration file ");
+    Serial.println(configFileName);
   }
 }
 
