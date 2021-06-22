@@ -5,7 +5,7 @@
 //     Arduino Ethernet shield: pin 4
 //     Adafruit SD shields and modules: pin 10
 //     Sparkfun SD shield: pin 8
-const int chipSelect = 10;
+const int chipSelect = 4;
 const char configFileName[] = "config.ini";
 
 void setup() {
@@ -19,7 +19,7 @@ void setup() {
   Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
-  pinMode(SS, OUTPUT);
+  pinMode(chipSelect, OUTPUT);
 
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
