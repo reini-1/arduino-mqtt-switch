@@ -1,2 +1,2 @@
-# arduino-mqtt-switch
-Arduino actor for impulse switches over mqtt
+# arduino-switch
+Arduino actor for impulse switches with webserver and mqtt
