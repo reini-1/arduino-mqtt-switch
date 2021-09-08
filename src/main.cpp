@@ -18,7 +18,7 @@ const int sdPin = 4;
 const int ethernetPin = 10;
 
 const char configFileName[] = "config.ini";
-char hostname[] = "arduino-switch";
+char hostname[] = "reinis-arduino-smart-switch";
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress ip(10, 14, 1, 200);
 int port = 80;
@@ -106,7 +106,7 @@ void loop() {
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println("Connection: close");  // the connection will be closed after completion of the response
-          client.println("Refresh: 5");  // refresh the page automatically every 5 sec
+          client.println("Refresh: 10");  // refresh the page automatically every 5 sec
           client.println();
           client.println("<!DOCTYPE HTML>");
           client.println("<html>");
