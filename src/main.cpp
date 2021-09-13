@@ -6,7 +6,7 @@
 //      pin 4:  Arduino Ethernet shield
 //      pin 10: Adafruit SD shields and modules
 //      pin 8:  Sparkfun SD shield
-const int sdPin = 4;
+#define SD_PIN 4
 
 // change this to macht your ethernet shield or module CS pin
 //      pin 10: Most Arduino shields
@@ -15,10 +15,12 @@ const int sdPin = 4;
 //      pin 20: Teensy++ 2.0
 //      pin 15: ESP8266 with Adafruit Featherwing Ethernet
 //      pin 33: ESP32 with Adafruit Featherwing Ethernetconst int etherPin = 10;
-const int ethernetPin = 10;
+#define ETHERNET_PIN 10
 
 const char configFileName[] = "config.ini";
 char hostname[] = "reinis-arduino-smart-switch";
+unsigned char webBuffer[200];
+
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress ip(10, 14, 1, 200);
 int port = 80;
@@ -35,10 +37,10 @@ void setup() {
   Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
-  pinMode(sdPin, OUTPUT);
+  pinMode(SD_PIN, OUTPUT);
 
   // see if the card is present and can be initialized:
-  if (!SD.begin(sdPin)) {
+  if (!SD.begin(SD_PIN)) {
     Serial.println("Card failed, or not present");
   }
   Serial.println("card initialized.");
@@ -63,7 +65,7 @@ void setup() {
   }
 
   Serial.print("Initializing ethernet shield...");
-  Ethernet.init(ethernetPin);
+  Ethernet.init(ETHERNET_PIN);
   Ethernet.begin(mac, ip);
 
   // Check for Ethernet hardware present
@@ -96,7 +98,7 @@ void loop() {
     boolean currentLineIsBlank = true;
     while (client.connected()) {
       if (client.available()) {
-        char c = client.read();
+        unsigned char c = client.read();
         Serial.write(c);
         // if you've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
