@@ -17,15 +17,63 @@
 //      pin 33: ESP32 with Adafruit Featherwing Ethernetconst int etherPin = 10;
 #define ETHERNET_PIN 10
 
+// string constants
+char stringBuffer[200];
+char stringIP[16];
+const static char COMMON_CRLF[] PROGMEM = "\r\n";
+const static char COMMON_SUCCESS[] PROGMEM = "success.";
+const static char SD_INIT[] PROGMEM = "Initializing SD card ... ";
+const static char SD_FAIL[] PROGMEM = "failed or card not present. Ignoring it.";
+const static char CONF_FAIL[] PROGMEM = "Error opening configuration file ";
+const static char ETHER_INIT[] PROGMEM = "Initializing ethernet shield ... ";
+const static char ETHER_FAIL[] PROGMEM = "shield was not found. PANIC.";
+const static char ETHER_WARN[] PROGMEM = "cable is not connected.";
+const static char ETHER_IP[] PROGMEM = "IP: ";
+const static char WEBSERVER_NAME[] PROGMEM = "Name: ";
+const static char WEBSERVER_PORT[] PROGMEM = "Port: ";
+const static char WEBSERVER_INIT[] PROGMEM = "Started webserver and waiting for connections.";
+
 const char configFileName[] = "config.ini";
 char hostname[] = "reinis-arduino-smart-switch";
-unsigned char webBuffer[200];
+char webBuffer[200];
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress ip(10, 14, 1, 200);
 int port = 80;
 EthernetServer server(port);
 
+// string functions
+
+char* getProgmemString(const char* str) {
+ // String replacement - move string from flash to local buffer
+  strcpy_P(stringBuffer, (char*)str);
+  return stringBuffer;
+}
+
+void printString(const char *str) {
+  const char *p;
+  p = str;
+  while (*p) {
+    Serial.print(*p);
+    p++;
+  }
+}
+
+void printProgmemString(const char *str) {
+  printString(getProgmemString(str));
+}
+
+void printStringln(const char *str) {
+  printString(str);
+  printProgmemString(COMMON_CRLF);
+}
+
+void printProgmemStringln(const char *str) {
+  printProgmemString(str);
+  printProgmemString(COMMON_CRLF);
+}
+
+// initialization
 void setup() {
  // Open serial communications and wait for port to open:
   Serial.begin(115200);
@@ -33,60 +81,74 @@ void setup() {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
 
-
-  Serial.print("Initializing SD card...");
+  printProgmemString(SD_INIT);
+  // Serial.print("Initializing SD card...");
   // make sure that the default chip select pin is set to
   // output, even if you don't use it:
   pinMode(SD_PIN, OUTPUT);
 
   // see if the card is present and can be initialized:
   if (!SD.begin(SD_PIN)) {
-    Serial.println("Card failed, or not present");
-  }
-  Serial.println("card initialized.");
+    printProgmemStringln(SD_FAIL);
+  } else {
+    printProgmemStringln(COMMON_SUCCESS);
 
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  File configFile = SD.open(configFileName);
+    // open the file. note that only one file can be open at a time,
+    // so you have to close this one before opening another.
+    File configFile = SD.open(configFileName);
 
-  // if the file is available, print content
-  if (configFile) {
-    while (configFile.available()) {
-      Serial.write(configFile.read());
+    // if the file is available, print content
+    if (configFile) {
+      while (configFile.available()) {
+        Serial.write(configFile.read());
+      }
+      configFile.close();
+      printProgmemString(COMMON_CRLF);
+      printProgmemString(COMMON_CRLF);
     }
-    configFile.close();
-    Serial.println();
-    Serial.println();
-  }
-  // if the file isn't open, pop up an error
-  else {
-    Serial.print("error opening configuration file ");
-    Serial.println(configFileName);
+    // if the file isn't open, pop up an error
+    else {
+      printProgmemString(CONF_FAIL);
+      // Serial.println(configFileName);
+      printStringln(configFileName);
+    }
   }
 
-  Serial.print("Initializing ethernet shield...");
+  printProgmemString(ETHER_INIT);
   Ethernet.init(ETHERNET_PIN);
   Ethernet.begin(mac, ip);
 
   // Check for Ethernet hardware present
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("ethernet shield was not found.  Sorry, can't run without hardware.");
+    printProgmemStringln(ETHER_FAIL);
     while (true) {
       delay(1); // do nothing, no point running without Ethernet hardware
     }
   }
   if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("ethernet cable is not connected.");
+    printProgmemStringln(ETHER_WARN);
+  } else {
+    printProgmemStringln(COMMON_SUCCESS);
   }
-  Serial.print("ip address is ");
-  Serial.println(Ethernet.localIP());
 
-  Serial.print("Start webserver ");
-  Serial.print(hostname);
-  Serial.print(" on port ");
-  Serial.print(port);
-  Serial.println(" and waiting for connections ...");
+  printProgmemString(ETHER_IP);
+  itoa(Ethernet.localIP()[0], stringIP, 10);
+  for (byte i = 1; i < 4 ; i++) {
+    strcat(stringIP, ".");
+    itoa(Ethernet.localIP()[i], stringBuffer, 10);
+    strcat(stringIP, stringBuffer);
+  }
+  printStringln(stringIP);
+
+  printProgmemString(WEBSERVER_NAME);
+  printStringln(hostname);
+  printProgmemString(WEBSERVER_PORT);
+  itoa(port, stringBuffer, 10);
+  printStringln(stringBuffer);
+
   server.begin();
+
+  printProgmemStringln(WEBSERVER_INIT);
 }
 
 void loop() {
@@ -98,7 +160,7 @@ void loop() {
     boolean currentLineIsBlank = true;
     while (client.connected()) {
       if (client.available()) {
-        unsigned char c = client.read();
+        char c = client.read();
         Serial.write(c);
         // if you've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
