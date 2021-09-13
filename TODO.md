@@ -24,6 +24,10 @@
 - [ ] add button to webinterface
 - [ ] turn led on/off with button in web interface
 
+## Github issues
+
+- [ ] move todos to Github issues
+
 ## Impulse switch
 
 - [ ] turn relay on/of with button in web interface
