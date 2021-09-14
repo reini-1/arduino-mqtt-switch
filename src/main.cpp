@@ -17,9 +17,13 @@
 //      pin 33: ESP32 with Adafruit Featherwing Ethernetconst int etherPin = 10;
 #define ETHERNET_PIN 10
 
+#define MAC 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
+#define IP 10, 14, 1, 200
+#define PORT 80
+#define HOSTNAME "reinis-arduino-smart-switch"
+
 // string constants
 char stringBuffer[200];
-char stringIP[16];
 const static char COMMON_CRLF[] PROGMEM = "\r\n";
 const static char COMMON_SUCCESS[] PROGMEM = "success.";
 const static char SD_INIT[] PROGMEM = "Initializing SD card ... ";
@@ -32,19 +36,28 @@ const static char ETHER_IP[] PROGMEM = "IP: ";
 const static char WEBSERVER_NAME[] PROGMEM = "Name: ";
 const static char WEBSERVER_PORT[] PROGMEM = "Port: ";
 const static char WEBSERVER_INIT[] PROGMEM = "Started webserver and waiting for connections.";
+const static char WEBSERVER_CONNECTED[] PROGMEM = "Webserver - client connected";
+const static char WEBSERVER_DISCONNECTED[] PROGMEM = "Webserver - client disconnected";
+const static char HTTP_HEADER_OK[] PROGMEM = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close";
+const static char HTTP_HEADER_REFRESH[] PROGMEM = "Refresh: 10";
+const static char HTML_HEADER[] PROGMEM = "<!DOCTYPE HTML>\r\n<html>\r\n<head>\r\n<title>" HOSTNAME "</title>\r\n</head>";
+const static char HTML_BODY_PRE[] PROGMEM = "<body>\r\n<h1>" HOSTNAME "</h1>";
+const static char HTML_BODY_POST[] PROGMEM = "</body>";
+const static char HTML_FOOTER[] PROGMEM = "</html>";
+const static char HTML_BR[] PROGMEM = "<br />";
+
 
 const char configFileName[] = "config.ini";
-char hostname[] = "reinis-arduino-smart-switch";
-char webBuffer[200];
 
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-IPAddress ip(10, 14, 1, 200);
-int port = 80;
+byte mac[] = { MAC };
+IPAddress ip(IP);
+int port = PORT;
+char hostname[30] = HOSTNAME;
 EthernetServer server(port);
 
 // string functions
 
-char* getProgmemString(const char* str) {
+char *getProgmemString(const char* str) {
  // String replacement - move string from flash to local buffer
   strcpy_P(stringBuffer, (char*)str);
   return stringBuffer;
@@ -57,6 +70,10 @@ void printString(const char *str) {
     Serial.print(*p);
     p++;
   }
+}
+
+void printChar(const char c) {
+  Serial.print(c);
 }
 
 void printProgmemString(const char *str) {
@@ -75,7 +92,7 @@ void printProgmemStringln(const char *str) {
 
 // initialization
 void setup() {
- // Open serial communications and wait for port to open:
+  // Open serial communications and wait for port to open:
   Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for Leonardo only
@@ -131,58 +148,49 @@ void setup() {
     printProgmemStringln(COMMON_SUCCESS);
   }
 
+  // print ip address (stringBuffer has to be at least 16 bytes!)
   printProgmemString(ETHER_IP);
-  itoa(Ethernet.localIP()[0], stringIP, 10);
+  itoa(Ethernet.localIP()[0], stringBuffer, 10);
   for (byte i = 1; i < 4 ; i++) {
-    strcat(stringIP, ".");
-    itoa(Ethernet.localIP()[i], stringBuffer, 10);
-    strcat(stringIP, stringBuffer);
+    strcat(stringBuffer, ".");
+    itoa(Ethernet.localIP()[i], stringBuffer + strlen(stringBuffer), 10);
   }
-  printStringln(stringIP);
+  printStringln(stringBuffer);
 
+  // print server name and port
   printProgmemString(WEBSERVER_NAME);
   printStringln(hostname);
   printProgmemString(WEBSERVER_PORT);
   itoa(port, stringBuffer, 10);
-  printStringln(stringBuffer);
 
+  // start webserver
+  printStringln(stringBuffer);
   server.begin();
 
   printProgmemStringln(WEBSERVER_INIT);
 }
 
 void loop() {
-  // listen for incoming clients
+  // listen for incoming client connections
   EthernetClient client = server.available();
   if (client) {
-    Serial.println("Webserver - new client");
+    printProgmemStringln(WEBSERVER_CONNECTED);
     // an http request ends with a blank line
     boolean currentLineIsBlank = true;
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        Serial.write(c);
+        printChar(c);
         // if you've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
         // so you can send a reply
         if (c == '\n' && currentLineIsBlank) {
           // send a standard http response header
-          client.println("HTTP/1.1 200 OK");
-          client.println("Content-Type: text/html");
-          client.println("Connection: close");  // the connection will be closed after completion of the response
-          client.println("Refresh: 10");  // refresh the page automatically every 5 sec
+          client.println(getProgmemString(HTTP_HEADER_OK));
+          client.println(getProgmemString(HTTP_HEADER_REFRESH));
           client.println();
-          client.println("<!DOCTYPE HTML>");
-          client.println("<html>");
-          client.println("<head>");
-          client.println("<title>");
-          client.println(hostname);
-          client.println("</title>");
-          client.println("</head>");
-          client.println("<body>");
-          client.println("<h1>");
-          client.println(hostname);
-          client.println("</h1>");
+          client.println(getProgmemString(HTML_HEADER));
+          client.println(getProgmemString(HTML_BODY_PRE));
           // output the value of each analog input pin
           for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
             int sensorReading = analogRead(analogChannel);
@@ -190,10 +198,10 @@ void loop() {
             client.print(analogChannel);
             client.print(" is ");
             client.print(sensorReading);
-            client.println("<br />");
+            client.println(getProgmemString(HTML_BR));
           }
-          client.println("</body>");
-          client.println("</html>");
+          client.println(getProgmemString(HTML_BODY_POST));
+          client.println(getProgmemString(HTML_FOOTER));
           break;
         }
         if (c == '\n') {
@@ -209,6 +217,6 @@ void loop() {
     delay(1);
     // close the connection:
     client.stop();
-    Serial.println("Webserver - client disconnected");
+    printProgmemStringln(WEBSERVER_DISCONNECTED);
   }
 }
