@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <SD.h>
 #include <Ethernet.h>
+#include <SD.h>
 
 // change this to match your SD shield or module;
 //      pin 4:  Arduino Ethernet shield
@@ -40,16 +40,16 @@ const static char WEBSERVER_CONNECTED[] PROGMEM = "Webserver - client connected"
 const static char WEBSERVER_DISCONNECTED[] PROGMEM = "Webserver - client disconnected";
 const static char HTTP_HEADER_OK[] PROGMEM = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close";
 const static char HTTP_HEADER_REFRESH[] PROGMEM = "Refresh: 10";
-const static char HTML_HEADER[] PROGMEM = "<!DOCTYPE HTML>\r\n<html>\r\n<head>\r\n<title>" HOSTNAME "</title>\r\n</head>";
+const static char HTML_HEADER[] PROGMEM =
+  "<!DOCTYPE HTML>\r\n<html>\r\n<head>\r\n<title>" HOSTNAME "</title>\r\n</head>";
 const static char HTML_BODY_PRE[] PROGMEM = "<body>\r\n<h1>" HOSTNAME "</h1>";
 const static char HTML_BODY_POST[] PROGMEM = "</body>";
 const static char HTML_FOOTER[] PROGMEM = "</html>";
 const static char HTML_BR[] PROGMEM = "<br />";
 
-
 const char configFileName[] = "config.ini";
 
-byte mac[] = { MAC };
+byte mac[] = {MAC};
 IPAddress ip(IP);
 int port = PORT;
 char hostname[30] = HOSTNAME;
@@ -57,9 +57,9 @@ EthernetServer server(port);
 
 // string functions
 
-char *getProgmemString(const char* str) {
- // String replacement - move string from flash to local buffer
-  strcpy_P(stringBuffer, (char*)str);
+char *getProgmemString(const char *str) {
+  // String replacement - move string from flash to local buffer
+  strcpy_P(stringBuffer, (char *)str);
   return stringBuffer;
 }
 
@@ -122,9 +122,7 @@ void setup() {
       configFile.close();
       printProgmemString(COMMON_CRLF);
       printProgmemString(COMMON_CRLF);
-    }
-    // if the file isn't open, pop up an error
-    else {
+    } else { // if the file isn't open, pop up an error
       printProgmemString(CONF_FAIL);
       // Serial.println(configFileName);
       printStringln(configFileName);
@@ -151,7 +149,7 @@ void setup() {
   // print ip address (stringBuffer has to be at least 16 bytes!)
   printProgmemString(ETHER_IP);
   itoa(Ethernet.localIP()[0], stringBuffer, 10);
-  for (byte i = 1; i < 4 ; i++) {
+  for (byte i = 1; i < 4; i++) {
     strcat(stringBuffer, ".");
     itoa(Ethernet.localIP()[i], stringBuffer + strlen(stringBuffer), 10);
   }
