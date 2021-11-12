@@ -6,6 +6,7 @@ Arduino actor for latching switches (Stromstoßschalter) with webserver and mqtt
 
 Source code formating is done with `clang-format` with the following style setting:
 
+```config
 BasedOnStyle: LLVM
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortBlocksOnASingleLine: Empty
@@ -17,3 +18,4 @@ IndentWidth: 2
 NamespaceIndentation: All
 TabWidth: 2
 UseTab: Never
+```
