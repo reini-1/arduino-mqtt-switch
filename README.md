@@ -1,4 +1,4 @@
-# RASS - reinis-arduino-smart-switch
+# arduino-smart-switch
 
 Arduino actor for latching switches (Stromstoßschalter) with webserver and mqtt
 
