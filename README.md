@@ -1,6 +1,6 @@
 # arduino-smart-switch
 
-Arduino actor for latching switches (Stromstoßschalter) with webserver and mqtt
+Arduino actor for latching/impulse switches (Stromstoßschalter) with webserver and mqtt
 
 ## Code formating
 
